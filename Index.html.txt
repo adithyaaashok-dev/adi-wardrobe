@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AURA - AI Wardrobe & Outfit Generator</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f3ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            iosDark: '#1c1c1e',
+            iosCard: '#2c2c2e',
+            iosBorder: '#3a3a3c'
+          },
+          borderRadius: {
+            '4xl': '2rem',
+          }
+        }
+      }
+    }
+  </script>
+
+
+  <style>
+    /* Custom Scrollbar for sleek UI */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+    
+    /* Subtle glassmorphism */
+    .glass-nav {
+      background: rgba(28, 28, 30, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .glass-card {
+      background: rgba(44, 44, 46, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Hide scrollbars for clean horizontally scrollable widgets */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+
+</head>
+<body class="h-full flex justify-center items-center bg-slate-950 font-sans antialiased text-slate-100 selection:bg-brand-500 selection:text-white">
+
+  <!-- iPhone Mockup Container for Desktop & Full Width for Mobile -->
+  <div class="w-full h-full max-w-md md:max-w-lg md:h-[92vh] md:rounded-[48px] md:border-[8px] md:border-slate-800 bg-slate-900 flex flex-col relative overflow-hidden shadow-2xl">
+
+<!-- iOS Dynamic Island / Status Bar Simulator (Visible on md screens up) -->
+<div class="hidden md:flex justify-between items-center px-7 pt-3 pb-2 text-xs font-semibold text-slate-400 z-50 select-none">
+  <span id="ios-time">9:41</span>
+  <div class="w-20 h-4 bg-black rounded-full flex items-center justify-center">
+    <div class="w-2 h-2 rounded-full bg-slate-800 mr-2"></div>
+  </div>
+  <div class="flex items-center gap-1.5">
+    <i class="fa-solid fa-signal"></i>
+    <i class="fa-solid fa-wifi"></i>
+    <i class="fa-solid fa-battery-full text-sm"></i>
+  </div>
+</div>
+
+<!-- Top Header -->
+<header class="px-5 py-3 glass-nav border-b border-slate-800/80 flex items-center justify-between z-40">
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+      <i class="fa-solid fa-wand-magic-sparkles text-white text-sm"></i>
+    </div>
+    <div>
+      <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">AURA</h1>
+      <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">AI Closet & Stylist</p>
+    </div>
+  </div>
+  
+  <button id="add-item-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-md shadow-brand-600/30 transition-all duration-200 active:scale-95">
+    <i class="fa-solid fa-plus text-xs"></i>
+    <span>Add Item</span>
+  </button>
+</header>
+
+<!-- App Views Wrapper -->
+<main class="flex-1 overflow-y-auto relative no-scrollbar pb-20">
+  
+  <!-- ========================================== -->
+  <!-- TAB 1: OUTFIT GENERATOR VIEW -->
+  <!-- ========================================== -->
+  <section id="view-generator" class="p-4 space-y-5 animate-fadeIn">
+    
+    <!-- Weather & Mood Simulator Card -->
+    <div class="glass-card rounded-3xl p-4 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-700/50 pb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-sliders text-brand-500"></i> Daily Context
+        </span>
+        <span class="text-[11px] bg-slate-800 px-2.5 py-1 rounded-full text-slate-300 font-medium border border-slate-700/50" id="current-date-badge">Today</span>
+      </div>
+
+      <!-- Weather Selectors -->
+      <div class="space-y-2">
+        <label class="text-xs text-slate-300 font-medium flex items-center justify-between">
+          <span>Weather Condition</span>
+          <span id="temp-display" class="font-bold text-brand-100">72°F (Mild)</span>
+        </label>
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" class="weather-btn active px-2 py-2 rounded-2xl bg-slate-800 border border-slate-700 flex flex-col items-center gap-1 transition-all text-xs" data-temp="82" data-condition="Sunny" data-warmth="Hot">
+            <i class="fa-solid fa-sun text-amber-400 text-base"></i>
+            <span class="text-[10px] text-slate-300">Sunny</span>
+          </button>
+          <button type="button" class="weather-btn px-2 py-2 rounded-2xl bg-slate-800 border border-slate-700/50 flex flex-col items-center gap-1 transition-all text-xs opacity-60 hover:opacity-100" data-temp="65" data-condition="Mild" data-warmth="Mild">
+            <i class="fa-solid fa-cloud-sun text-sky-400 text-base"></i>
+            <span class="text-[10px] text-slate-300">Mild</span>
+          </button>
+          <button type="button" class="weather-btn px-2 py-2 rounded-2xl bg-slate-800 border border-slate-700/50 flex flex-col items-center gap-1 transition-all text-xs opacity-60 hover:opacity-100" data-temp="52" data-condition="Rainy" data-warmth="Cool">
+            <i class="fa-solid fa-cloud-rain text-blue-400 text-base"></i>
+            <span class="text-[10px] text-slate-300">Rainy</span>
+          </button>
+          <button type="button" class="weather-btn px-2 py-2 rounded-2xl bg-slate-800 border border-slate-700/50 flex flex-col items-center gap-1 transition-all text-xs opacity-60 hover:opacity-100" data-temp="38" data-condition="Cold" data-warmth="Cold">
+            <i class="fa-solid fa-snowflake text-indigo-300 text-base"></i>
+            <span class="text-[10px] text-slate-300">Cold</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mood / Vibe Selector -->
+      <div class="space-y-2">
+        <label class="text-xs text-slate-300 font-medium">Desired Vibe / Mood</label>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <button type="button" class="mood-pill active shrink-0 px-3 py-1.5 rounded-full bg-brand-600 text-white text-xs font-medium border border-brand-500 shadow-sm" data-mood="Cozy">☕ Cozy</button>
+          <button type="button" class="mood-pill shrink-0 px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 hover:bg-slate-700" data-mood="Bold">🔥 Bold</button>
+          <button type="button" class="mood-pill shrink-0 px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 hover:bg-slate-700" data-mood="Chic">✨ Chic</button>
+          <button type="button" class="mood-pill shrink-0 px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 hover:bg-slate-700" data-mood="Minimalist">🌿 Minimalist</button>
+          <button type="button" class="mood-pill shrink-0 px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700 hover:bg-slate-700" data-mood="Casual">👟 Casual</button>
+        </div>
+      </div>
+
+      <!-- Generate Action Button -->
+      <button id="generate-outfits-btn" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+        <i class="fa-solid fa-sparkles text-amber-300"></i>
+        <span>Generate Outfit Recommendations</span>
+      </button>
+    </div>
+
+    <!-- Generated Recommendations Carousel Section -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-shirt text-brand-400"></i>
+          <span>Today's Lookbook</span>
+        </h2>
+        <span class="text-xs text-slate-400" id="match-count">3 Options</span>
+      </div>
+
+      <!-- Outfits Container (Dynamic Carousel) -->
+      <div id="outfit-results" class="space-y-4">
+        <!-- Dynamic JS Output Here -->
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- ========================================== -->
+  <!-- TAB 2: DIGITAL CLOSET VIEW -->
+  <!-- ========================================== -->
+  <section id="view-closet" class="p-4 space-y-4 hidden animate-fadeIn">
+    
+    <!-- Search & Category Filters -->
+    <div class="space-y-3">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+        <input type="text" id="closet-search" placeholder="Search closet items or tags..." class="w-full bg-slate-800/80 border border-slate-700 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <button class="category-filter active px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-600 text-white shrink-0" data-category="All">All</button>
+        <button class="category-filter px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-category="Top">Tops</button>
+        <button class="category-filter px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-category="Bottom">Bottoms</button>
+        <button class="category-filter px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-category="Outerwear">Outerwear</button>
+        <button class="category-filter px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-category="Shoes">Shoes</button>
+        <button class="category-filter px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-category="Accessory">Accessories</button>
+      </div>
+    </div>
+
+    <!-- Clothing Grid -->
+    <div id="closet-grid" class="grid grid-cols-2 gap-3">
+      <!-- Dynamic JS Output -->
+    </div>
+
+  </section>
+
+
+  <!-- ========================================== -->
+  <!-- TAB 3: WEAR HISTORY & STATS VIEW -->
+  <!-- ========================================== -->
+  <section id="view-history" class="p-4 space-y-4 hidden animate-fadeIn">
+    
+    <!-- Closet Stats Overview -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="glass-card p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center">
+          <i class="fa-solid fa-hanger text-base"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Items</p>
+          <p class="text-lg font-bold text-slate-100" id="stat-total-items">0</p>
+        </div>
+      </div>
+      <div class="glass-card p-3.5 rounded-2xl flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+          <i class="fa-solid fa-[#5c7cfa] fa-calendar-check text-base"></i>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold">Outfits Logged</p>
+          <p class="text-lg font-bold text-slate-100" id="stat-outfits-logged">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Wear History List -->
+    <div class="space-y-3">
+      <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-brand-400"></i>
+        <span>Wear History Log</span>
+      </h2>
+
+      <div id="history-list" class="space-y-3">
+        <!-- Dynamic JS Output -->
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- ========================================== -->
+<!-- BOTTOM NAVIGATION BAR (iOS Style) -->
+<!-- ========================================== -->
+<nav class="absolute bottom-0 left-0 right-0 glass-nav border-t border-slate-800 px-6 py-2 flex justify-around items-center z-40">
+  <button class="nav-tab active flex flex-col items-center gap-1 text-brand-400 transition-all" data-tab="generator">
+    <i class="fa-solid fa-compass text-lg"></i>
+    <span class="text-[10px] font-medium">Stylist</span>
+  </button>
+
+  <button class="nav-tab flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-all" data-tab="closet">
+    <i class="fa-solid fa-boxes-packing text-lg"></i>
+    <span class="text-[10px] font-medium">Closet</span>
+  </button>
+
+  <button class="nav-tab flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-all" data-tab="history">
+    <i class="fa-solid fa-[#5c7cfa] fa-clock-rotate-left text-lg"></i>
+    <span class="text-[10px] font-medium">History</span>
+  </button>
+</nav>
+
+
+<!-- ========================================== -->
+<!-- MODAL: ADD / EDIT ITEM -->
+<!-- ========================================== -->
+<div id="add-item-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center hidden opacity-0 transition-opacity duration-300">
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+    
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+        <i class="fa-solid fa-plus-circle text-brand-500"></i> Add Wardrobe Item
+      </h3>
+      <button id="close-modal-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+
+    <form id="add-item-form" class="space-y-3 text-xs">
+      <!-- Title -->
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">Item Title</label>
+        <input type="text" id="item-title" required placeholder="e.g. Vintage Denim Jacket" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500">
+      </div>
+
+      <!-- Category & Warmth -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Category</label>
+          <select id="item-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500">
+            <option value="Top">Top</option>
+            <option value="Bottom">Bottom</option>
+            <option value="Outerwear">Outerwear</option>
+            <option value="Shoes">Shoes</option>
+            <option value="Accessory">Accessory</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Warmth Rating</label>
+          <select id="item-warmth" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500">
+            <option value="Hot">Hot Weather (Light)</option>
+            <option value="Mild" selected>Mild Weather (Medium)</option>
+            <option value="Cool">Cool / Cold (Heavy)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Image Source Selector (URL vs Presets) -->
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">Image Source URL or Preset</label>
+        <div class="flex gap-2 mb-2">
+          <input type="url" id="item-image-url" placeholder="Paste image URL..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500">
+        </div>
+        <!-- Preset Quick Pickers -->
+        <p class="text-[10px] text-slate-400 mb-1">Or choose a quick preset:</p>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-1" id="preset-images-container">
+          <!-- Preset JS options appended -->
+        </div>
+      </div>
+
+      <!-- Mood Tags -->
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">Mood Tags (Select Multiple)</label>
+        <div class="flex flex-wrap gap-1.5" id="modal-mood-tags">
+          <span class="tag-option cursor-pointer px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]" data-tag="Cozy">☕ Cozy</span>
+          <span class="tag-option cursor-pointer px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]" data-tag="Bold">🔥 Bold</span>
+          <span class="tag-option cursor-pointer px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]" data-tag="Chic">✨ Chic</span>
+          <span class="tag-option cursor-pointer px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]" data-tag="Minimalist">🌿 Minimalist</span>
+          <span class="tag-option cursor-pointer px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]" data-tag="Casual">👟 Casual</span>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-2xl shadow-lg shadow-brand-600/30 transition-all text-xs mt-2">
+        Save Item to Digital Wardrobe
+      </button>
+    </form>
+
+  </div>
+</div>
+
+
+<!-- ========================================== -->
+<!-- MODAL: SWAP ITEM IN OUTFIT -->
+<!-- ========================================== -->
+<div id="swap-item-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center hidden">
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+        <i class="fa-solid fa-rotate text-brand-500"></i> Swap Garment
+      </h3>
+      <button id="close-swap-modal-btn" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+    <div id="swap-items-list" class="grid grid-cols-2 gap-3">
+      <!-- Dynamic Swap Options List -->
+    </div>
+  </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="toast" class="absolute top-16 left-1/2 -translate-x-1/2 bg-slate-800/90 text-slate-100 text-xs px-4 py-2 rounded-full border border-slate-700 shadow-xl opacity-0 transition-all pointer-events-none z-50 flex items-center gap-2">
+  <i class="fa-solid fa-circle-check text-emerald-400"></i>
+  <span id="toast-msg">Action completed</span>
+</div>
+  </div>
+
+  <!-- APPLICATION LOGIC & JAVASCRIPT -->
+  <script>
+    // --- 1. INITIAL SAMPLE DATA SET ---
+    const SAMPLE_ITEMS = [
+      {
+        id: 'item-1',
+        title: 'Classic White Tee',
+        category: 'Top',
+        warmth: 'Hot',
+        moods: ['Minimalist', 'Casual', 'Cozy'],
+        image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-2',
+        title: 'Oversized Knit Sweater',
+        category: 'Top',
+        warmth: 'Cool',
+        moods: ['Cozy', 'Chic'],
+        image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-3',
+        title: 'Light Blue Denim Jeans',
+        category: 'Bottom',
+        warmth: 'Mild',
+        moods: ['Casual', 'Minimalist'],
+        image: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-4',
+        title: 'Tailored Black Trousers',
+        category: 'Bottom',
+        warmth: 'Mild',
+        moods: ['Chic', 'Bold', 'Minimalist'],
+        image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-5',
+        title: 'Leather Biker Jacket',
+        category: 'Outerwear',
+        warmth: 'Cool',
+        moods: ['Bold', 'Chic'],
+        image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-6',
+        title: 'Beige Trench Coat',
+        category: 'Outerwear',
+        warmth: 'Cool',
+        moods: ['Chic', 'Minimalist'],
+        image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-7',
+        title: 'White Retro Sneakers',
+        category: 'Shoes',
+        warmth: 'Mild',
+        moods: ['Casual', 'Minimalist', 'Cozy'],
+        image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-8',
+        title: 'Chunky Black Boots',
+        category: 'Shoes',
+        warmth: 'Cool',
+        moods: ['Bold', 'Chic'],
+        image: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-9',
+        title: 'Gold Layered Necklace',
+        category: 'Accessory',
+        warmth: 'Hot',
+        moods: ['Chic', 'Bold'],
+        image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      },
+      {
+        id: 'item-10',
+        title: 'Ribbed Knit Beanie',
+        category: 'Accessory',
+        warmth: 'Cool',
+        moods: ['Cozy', 'Casual'],
+        image: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=400&q=80',
+        lastWorn: null
+      }
+    ];
+
+    const PRESET_IMAGES = [
+      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80'
+    ];
+
+    // --- 2. STATE MANAGEMENT ---
+    let wardrobe = JSON.parse(localStorage.getItem('aura_wardrobe')) || SAMPLE_ITEMS;
+    let wearHistory = JSON.parse(localStorage.getItem('aura_history')) || [];
+    let activeWeather = { condition: 'Sunny', temp: '82', warmth: 'Hot' };
+    let activeMood = 'Cozy';
+    let currentRecommendations = [];
+    let selectedSwapTarget = null; // { outfitIndex, category }
+
+    // Save State Helper
+    function saveState() {
+      localStorage.setItem('aura_wardrobe', JSON.stringify(wardrobe));
+      localStorage.setItem('aura_history', JSON.stringify(wearHistory));
+      updateStats();
+    }
+
+    // --- 3. DOM ELEMENTS ---
+    const views = {
+      generator: document.getElementById('view-generator'),
+      closet: document.getElementById('view-closet'),
+      history: document.getElementById('view-history')
+    };
+
+    // --- 4. NAVIGATION TAB SWITCHING ---
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        // Update Nav UI
+        document.querySelectorAll('.nav-tab').forEach(t => {
+          t.classList.remove('text-brand-400');
+          t.classList.add('text-slate-400');
+        });
+        tab.classList.add('text-brand-400');
+        tab.classList.remove('text-slate-400');
+
+        // Toggle Views
+        Object.keys(views).forEach(vKey => {
+          if (vKey = targetTab) {
+            views[vKey].classList.remove('hidden');
+          } else {
+            views[vKey].classList.add('hidden');
+          }
+        });
+
+        if (targetTab = 'closet') renderCloset();
+        if (targetTab = 'history') renderHistory();
+      });
+    });
+
+    // --- 5. WEATHER & MOOD SELECTORS ---
+    document.querySelectorAll('.weather-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.weather-btn').forEach(b => {
+          b.classList.remove('active', 'border-slate-700', 'bg-slate-800');
+          b.classList.add('opacity-60');
+        });
+        btn.classList.add('active', 'border-slate-700', 'bg-slate-800');
+        btn.classList.remove('opacity-60');
+
+        activeWeather = {
+          condition: btn.dataset.condition,
+          temp: btn.dataset.temp,
+          warmth: btn.dataset.warmth
+        };
+
+        document.getElementById('temp-display').textContent = `${activeWeather.temp}°F (${activeWeather.condition})`;
+      });
+    });
+
+    document.querySelectorAll('.mood-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.mood-pill').forEach(p => {
+          p.classList.remove('bg-brand-600', 'text-white', 'border-brand-500');
+          p.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+        });
+        pill.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+        pill.classList.add('bg-brand-600', 'text-white', 'border-brand-500');
+
+        activeMood = pill.dataset.mood;
+      });
+    });
+
+    // --- 6. RECOMMENDATION ENGINE ALGORITHM ---
+    function generateOutfits() {
+      const { warmth } = activeWeather;
+
+      // Filter wardrobe items by weather warmth appropriateness
+      const weatherAppropriate = wardrobe.filter(item => {
+        if (warmth = 'Hot') return item.warmth = 'Hot' || item.warmth = 'Mild';
+        if (warmth = 'Cold') return item.warmth = 'Cool' || item.warmth = 'Mild';
+        return true; // Mild accepts most
+      });
+
+      // Utility function to pick a random item from a filtered array
+      const pickItem = (category, preferMood = null) => {
+        let pool = weatherAppropriate.filter(i => i.category = category);
+        if (pool.length = 0) pool = wardrobe.filter(i => i.category = category); // Fallback to entire wardrobe
+        if (pool.length = 0) return null;
+
+        if (preferMood) {
+          const moodMatches = pool.filter(i => i.moods.includes(preferMood));
+          if (moodMatches.length > 0) return moodMatches[Math.floor(Math.random() * moodMatches.length)];
+        }
+        return pool[Math.floor(Math.random() * pool.length)];
+      };
+
+      // Construct 3 Distinct Options
+      
+      // 1. Classic Match (Prioritizes balance & casual comfort)
+      const classicOutfit = {
+        title: "Classic Daily Match",
+        tag: "Recommended",
+        tagColor: "bg-brand-500/20 text-brand-300 border-brand-500/30",
+        items: {
+          Top: pickItem('Top', 'Casual'),
+          Bottom: pickItem('Bottom', 'Casual'),
+          Outerwear: (warmth = 'Cool' || warmth = 'Rainy') ? pickItem('Outerwear') : null,
+          Shoes: pickItem('Shoes'),
+          Accessory: pickItem('Accessory')
+        }
+      };
+
+      // 2. Mood Match (Direct alignment with selected mood)
+      const moodOutfit = {
+        title: `${activeMood} Vibe Look`,
+        tag: `${activeMood} Choice`,
+        tagColor: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+        items: {
+          Top: pickItem('Top', activeMood),
+          Bottom: pickItem('Bottom', activeMood),
+          Outerwear: (warmth = 'Cool') ? pickItem('Outerwear', activeMood) : null,
+          Shoes: pickItem('Shoes', activeMood),
+          Accessory: pickItem('Accessory', activeMood)
+        }
+      };
+
+      // 3. Wildcard (Mixes underused items or statement pieces)
+      const wildcardOutfit = {
+        title: "Wildcard Rotation",
+        tag: "Fresh Look",
+        tagColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+        items: {
+          Top: pickItem('Top'),
+          Bottom: pickItem('Bottom'),
+          Outerwear: pickItem('Outerwear'),
+          Shoes: pickItem('Shoes'),
+          Accessory: pickItem('Accessory')
+        }
+      };
+
+      currentRecommendations = [classicOutfit, moodOutfit, wildcardOutfit];
+      renderRecommendations();
+    }
+
+    // Render Recommendations
+    function renderRecommendations() {
+      const container = document.getElementById('outfit-results');
+      container.innerHTML = '';
+
+      currentRecommendations.forEach((outfit, index) => {
+        const card = document.createElement('div');
+        card.className = 'glass-card rounded-3xl p-4 space-y-3 relative overflow-hidden transition-all duration-300';
+
+        let itemsHtml = '';
+        Object.entries(outfit.items).forEach(([cat, item]) => {
+          if (!item) return;
+          itemsHtml += `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-700/50">
+              <div class="flex items-center gap-3">
+                <img src="${item.image}" alt="${item.title}" class="w-10 h-10 rounded-lg object-cover bg-slate-700" onerror="this.src='https://placehold.co/100x100/1e293b/a5b4fc?text=Garment'">
+                <div>
+                  <p class="text-xs font-semibold text-slate-100">${item.title}</p>
+                  <p class="text-[10px] text-slate-400">${item.category} • ${item.moods.slice(0, 2).join(', ')}</p>
+                </div>
+              </div>
+              <button class="swap-btn px-2 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-[10px] text-slate-300 flex items-center gap-1" data-outfit="${index}" data-category="${cat}">
+                <i class="fa-solid fa-rotate text-brand-400 text-[9px]"></i> Swap
+              </button>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-700/50 pb-2">
+            <div>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${outfit.tagColor}">${outfit.tag}</span>
+              <h3 class="text-sm font-bold text-slate-100 mt-1">${outfit.title}</h3>
+            </div>
+            <button class="wear-today-btn px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-transform active:scale-95" data-outfit="${index}">
+              <i class="fa-solid fa-check"></i> Wear Today
+            </button>
+          </div>
+
+          <div class="space-y-1.5">
+            ${itemsHtml}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Attach Swap Event Listeners
+      document.querySelectorAll('.swap-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const outfitIndex = parseInt(btn.dataset.outfit);
+          const category = btn.dataset.category;
+          openSwapModal(outfitIndex, category);
+        });
+      });
+
+      // Attach Wear Today Listeners
+      document.querySelectorAll('.wear-today-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const outfitIndex = parseInt(btn.dataset.outfit);
+          logOutfitWear(currentRecommendations[outfitIndex]);
+        });
+      });
+    }
+
+    document.getElementById('generate-outfits-btn').addEventListener('click', generateOutfits);
+
+    // --- 7. CLOSET MANAGEMENT VIEW ---
+    function renderCloset(categoryFilter = 'All', searchQuery = '') {
+      const grid = document.getElementById('closet-grid');
+      grid.innerHTML = '';
+
+      let filtered = wardrobe;
+      if (categoryFilter ! 'All') {
+        filtered = filtered.filter(i => i.category = categoryFilter);
+      }
+      if (searchQuery.trim() ! '') {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(i => i.title.toLowerCase().includes(q) || i.moods.some(m => m.toLowerCase().includes(q)));
+      }
+
+      if (filtered.length = 0) {
+        grid.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400 text-xs">No wardrobe items found.</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'glass-card rounded-2xl p-2.5 relative group flex flex-col justify-between space-y-2';
+        card.innerHTML = `
+          <div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-800">
+            <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/300x300/1e293b/a5b4fc?text=Clothes'">
+            <button class="delete-item-btn absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-colors" data-id="${item.id}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            <span class="absolute bottom-1.5 left-1.5 text-[9px] font-semibold px-2 py-0.5 rounded-md bg-slate-900/80 text-slate-200 backdrop-blur-xs">${item.category}</span>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-100 truncate">${item.title}</h4>
+            <p class="text-[10px] text-slate-400">Warmth: ${item.warmth}</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              ${item.moods.map(m => `<span class="text-[8px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">${m}</span>`).join('')}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Delete item listener
+      document.querySelectorAll('.delete-item-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          wardrobe = wardrobe.filter(i => i.id ! id);
+          saveState();
+          renderCloset(categoryFilter, searchQuery);
+          showToast("Item removed from wardrobe");
+        });
+      });
+    }
+
+    // Category Filter Buttons
+    document.querySelectorAll('.category-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.category-filter').forEach(b => {
+          b.classList.remove('active', 'bg-brand-600', 'text-white', 'font-semibold');
+          b.classList.add('bg-slate-800', 'text-slate-300');
+        });
+        btn.classList.add('active', 'bg-brand-600', 'text-white', 'font-semibold');
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+
+        renderCloset(btn.dataset.category, document.getElementById('closet-search').value);
+      });
+    });
+
+    document.getElementById('closet-search').addEventListener('input', (e) => {
+      const activeCat = document.querySelector('.category-filter.active').dataset.category;
+      renderCloset(activeCat, e.target.value);
+    });
+
+    // --- 8. ADD ITEM MODAL logic ---
+    const modal = document.getElementById('add-item-modal');
+    
+    document.getElementById('add-item-btn').addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    });
+
+    document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+
+    function closeModal() {
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // Populate Modal Image Presets
+    const presetContainer = document.getElementById('preset-images-container');
+    PRESET_IMAGES.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'w-10 h-10 rounded-lg object-cover cursor-pointer border-2 border-transparent hover:border-brand-500 shrink-0';
+      img.addEventListener('click', () => {
+        document.getElementById('item-image-url').value = url;
+      });
+      presetContainer.appendChild(img);
+    });
+
+    // Tag Selection in Modal
+    document.querySelectorAll('#modal-mood-tags .tag-option').forEach(tag => {
+      tag.addEventListener('click', () => {
+        tag.classList.toggle('bg-brand-600');
+        tag.classList.toggle('text-white');
+        tag.classList.toggle('border-brand-500');
+        tag.classList.toggle('bg-slate-800');
+      });
+    });
+
+    // Add Form Submit
+    document.getElementById('add-item-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const selectedTags = [];
+      document.querySelectorAll('#modal-mood-tags .tag-option.bg-brand-600').forEach(t => {
+        selectedTags.push(t.dataset.tag);
+      });
+
+      const newItem = {
+        id: 'item-' + Date.now(),
+        title: document.getElementById('item-title').value,
+        category: document.getElementById('item-category').value,
+        warmth: document.getElementById('item-warmth').value,
+        moods: selectedTags.length > 0 ? selectedTags : ['Casual'],
+        image: document.getElementById('item-image-url').value || PRESET_IMAGES[0],
+        lastWorn: null
+      };
+
+      wardrobe.unshift(newItem);
+      saveState();
+      closeModal();
+      showToast("New clothing item saved!");
+      
+      // Reset Form
+      document.getElementById('add-item-form').reset();
+      document.querySelectorAll('#modal-mood-tags .tag-option').forEach(t => {
+        t.classList.remove('bg-brand-600', 'text-white', 'border-brand-500');
+        t.classList.add('bg-slate-800');
+      });
+
+      renderCloset();
+    });
+
+    // --- 9. ITEM SWAPPING MODAL ---
+    const swapModal = document.getElementById('swap-item-modal');
+    
+    function openSwapModal(outfitIndex, category) {
+      selectedSwapTarget = { outfitIndex, category };
+      const list = document.getElementById('swap-items-list');
+      list.innerHTML = '';
+
+      const alternatives = wardrobe.filter(i => i.category = category);
+      
+      if (alternatives.length = 0) {
+        list.innerHTML = `<p class="col-span-2 text-xs text-slate-400 text-center py-4">No alternative ${category} items in wardrobe.</p>`;
+      } else {
+        alternatives.forEach(alt => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'glass-card p-2 rounded-xl flex items-center gap-2 cursor-pointer hover:border-brand-500 transition-colors';
+          itemDiv.innerHTML = `
+            <img src="${alt.image}" class="w-10 h-10 rounded-lg object-cover">
+            <div class="truncate">
+              <p class="text-xs font-semibold text-slate-100 truncate">${alt.title}</p>
+              <p class="text-[9px] text-slate-400">${alt.warmth}</p>
+            </div>
+          `;
+          itemDiv.addEventListener('click', () => {
+            currentRecommendations[outfitIndex].items[category] = alt;
+            renderRecommendations();
+            closeSwapModal();
+            showToast(`Swapped ${category} to ${alt.title}`);
+          });
+          list.appendChild(itemDiv);
+        });
+      }
+
+      swapModal.classList.remove('hidden');
+    }
+
+    document.getElementById('close-swap-modal-btn').addEventListener('click', closeSwapModal);
+    function closeSwapModal() {
+      swapModal.classList.add('hidden');
+    }
+
+    // --- 10. WEAR HISTORY & LOGGING ---
+    function logOutfitWear(outfit) {
+      const logEntry = {
+        id: 'history-' + Date.now(),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        outfitTitle: outfit.title,
+        weather: `${activeWeather.temp}°F, ${activeWeather.condition}`,
+        items: Object.values(outfit.items).filter(Boolean)
+      };
+
+      wearHistory.unshift(logEntry);
+      saveState();
+      showToast("Outfit logged in history!");
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-list');
+      container.innerHTML = '';
+
+      if (wearHistory.length = 0) {
+        container.innerHTML = `<p class="text-center text-slate-400 text-xs py-8">No logged outfits yet. Click "Wear Today" on any generated look!</p>`;
+        return;
+      }
+
+      wearHistory.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'glass-card rounded-2xl p-3 space-y-2';
+        
+        const thumbs = log.items.map(i => `<img src="${i.image}" class="w-8 h-8 rounded-md object-cover bg-slate-800">`).join('');
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-700/40 pb-2">
+            <div>
+              <p class="text-xs font-bold text-slate-100">${log.outfitTitle}</p>
+              <p class="text-[10px] text-slate-400">${log.date} • ${log.weather}</p>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Worn</span>
+          </div>
+          <div class="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+            ${thumbs}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total-items').textContent = wardrobe.length;
+      document.getElementById('stat-outfits-logged').textContent = wearHistory.length;
+    }
+
+    // Toast Notification Utility
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // --- 11. INITIALIZATION ON LOAD ---
+    window.onload = function() {
+      // Set current date badge
+      const today = new Date();
+      document.getElementById('current-date-badge').textContent = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      updateStats();
+      generateOutfits(); // Generate initial set on load
+    };
+  </script>
+
+</body>
+</html>
+
